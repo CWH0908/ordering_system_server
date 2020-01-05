@@ -114,25 +114,12 @@ app.get('/register', async function (req, res) {
     res.json(data); //返回数据
 })
 
-//用户注册数据写入数据库
+//用户注册数据新增入数据库
 app.get('/inputRegister', async function (req, res) {
-    // let data = await login_Schema.save({
-    //     userAccount: req.query.account,
-    //     password: req.query.psw,
-    //     orderData: [],
-    //     addressData: []
-    // }, function (err, doc) {
-    //     if (err) {
-    //         console.log("访问数据库错误 :" + err);
-    //         return "error"
-    //     } else {
-    //         return doc;
-    //     }
-    // });
-    // res.json(data); //返回数据
     login_Schema.create({
         userAccount: req.query.account,
         password: req.query.psw,
+        pic_url: "'http://49.235.92.173:70/graduationDesign_images/defaultHeadImg.jpg'", //默认头像地址
         orderData: [],
         addressData: []
     }, function (err, doc) {
@@ -145,7 +132,43 @@ app.get('/inputRegister', async function (req, res) {
     });
 })
 
+//用户地址更新入数据库
+app.get('/updateAddress', async function (req, res) {
 
+    //找到账号为*** 修改地址数组为新的
+    // db.user_datas.updateOne({userAccount:'15815817682'},{$push:{"addressData":{name:'cwh'}}})
+    login_Schema.updateOne({
+        "userAccount": req.query.account
+    }, {
+        "$set": {
+            "addressData": JSON.parse(req.query.addressData)
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("地址更新失败");
+        } else {
+            console.log("地址更新成功");
+        }
+    })
+})
+
+//用户订单更新入数据库
+app.get('/updateOrder', async function (req, res) {
+    //找到账号为*** 修改订单数组为新的
+    login_Schema.updateOne({
+        "userAccount": req.query.account
+    }, {
+        "$set": {
+            "orderData": JSON.parse(req.query.orderData)
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("订单更新失败");
+        } else {
+            console.log("订单更新成功");
+        }
+    })
+})
 
 
 
