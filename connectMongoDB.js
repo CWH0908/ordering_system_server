@@ -233,6 +233,34 @@ app.get('/deleteFoodItem', async function (req, res) {
     })
 })
 
+//新增菜品
+app.get('/insertFoodItem', async function (req, res) {
+    //将传入的foodItem插入到数据库文档集合中
+    let foodItem = JSON.parse(req.query.foodItem);
+    console.log("转换后的新增foodItem", foodItem);
+    home_foodlists_Schema.create({
+        foodID: foodItem.foodID,
+        foodInfo: foodItem.foodInfo,
+        foodName: foodItem.foodName,
+        foodSaleTimes: foodItem.foodSaleTimes,
+        foodType: foodItem.foodType,
+        isRecommend: foodItem.isRecommend,
+        newMoney: foodItem.newMoney,
+        oldMoney: foodItem.oldMoney,
+        pic_url: foodItem.pic_url,
+        saleTimes: foodItem.saleTimes,
+        shopID: foodItem.shopID,
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            console.log("添加菜品成功");
+            return doc;
+        }
+    });
+})
+
 
 
 
