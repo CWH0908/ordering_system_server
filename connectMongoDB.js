@@ -3,6 +3,20 @@ let app = new express();
 let RouterAPI = express.Router();
 let axios = require('axios');
 
+//引入七牛云请求配置
+const bodyparse = require('body-parser')
+// 解析数据
+app.use(bodyparse.json())
+// 引入七牛云配置
+const qnconfig = require('./config.js')
+// 处理请求
+app.get('/token', (req, res, next) => {
+  res.status(200).send(qnconfig.uploadToken)
+})
+
+
+
+
 //解决跨域
 app.all('*', function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
