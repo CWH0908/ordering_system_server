@@ -21,8 +21,9 @@ let home_recommends_Schema = require("./home/home_recommends_Schema")
 let home_shoplists_Schema = require("./home/home_shoplists_Schema")
 let home_foodlists_Schema = require("./home/home_foodlists_Schema")
 let login_Schema = require("./userData/login_Schema")
+let shopLogin_Schema = require("./adminSchema/shopLogin_Schema")
 
-//前端路由操作
+//客户端请求*********************************************************************************************************
 
 //获取home页导航条数据
 app.get('/home_nav', async function (req, res) {
@@ -170,6 +171,67 @@ app.get('/updateOrder', async function (req, res) {
     })
 })
 
+// ********************************************************************************************************
+
+// 管理端请求*********************************************************************
+
+//商家登录
+app.get('/shopLogin', async function (req, res) {
+    // console.log("参数信息",req.query.account,req.query.psw);
+    let data = await shopLogin_Schema.find({
+        shopAccount: req.query.account,
+        password: req.query.psw
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            return doc;
+        }
+    });
+    res.json(data); //返回数据
+})
+
+//商家注册预留
+
+//修改商家菜品列表
+app.get('/updateFoodList', async function (req, res) {
+    // console.log("参数信息", req.query.foodID, req.query.foodItem);
+    //找到菜品ID 进行数据更新
+    home_foodlists_Schema.updateOne({
+        "foodID": req.query.foodID
+    }, {
+        "$set": {
+            "pic_url": JSON.parse(req.query.foodItem).pic_url,
+            "foodName": JSON.parse(req.query.foodItem).foodName,
+            "foodInfo": JSON.parse(req.query.foodItem).foodInfo,
+            "newMoney": JSON.parse(req.query.foodItem).newMoney,
+            "foodType": JSON.parse(req.query.foodItem).foodType,
+            "isRecommend": JSON.parse(req.query.foodItem).isRecommend,
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("菜品更新失败");
+        } else {
+            console.log("菜品更新成功");
+        }
+    })
+})
+
+//删除菜品
+app.get('/deleteFoodItem', async function (req, res) {
+    console.log("删除菜品ID：", req.query.foodID);
+    //找到菜品ID 进行删除
+    home_foodlists_Schema.remove({
+        "foodID": req.query.foodID
+    }, function (err, doc) {
+        if (err) {
+            console.log("菜品删除失败");
+        } else {
+            console.log("菜品删除成功");
+        }
+    })
+})
 
 
 

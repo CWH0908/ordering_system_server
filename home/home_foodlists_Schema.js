@@ -7,21 +7,34 @@ var TestSchema = new mongoose.Schema({
     foodID: {
         type: String
     },
-    foodName:{
-        type:String
-    },
-    foodSaleTimes:{
-        type:Number
-    },
-    foodInfo:{
+    foodType: {
         type: String
     },
-    oldMoney:{
-        type:Number
+    pic_url: {
+        type: String
     },
-    newMoney:{
-        type:Number
+    foodName: {
+        type: String
+    },
+    foodSaleTimes: {
+        type: Number
+    },
+    foodInfo: {
+        type: String
+    },
+    oldMoney: {
+        type: Number
+    },
+    newMoney: {
+        type: Number
+    },
+    isRecommend: {
+        type: String
+    },
+    saleTimes: {
+        type: String
     }
+
 });
 var TestModel = mongoose.connection.model("home_foodlists", TestSchema); //填写你的数据库 集合（复数形式）
 
