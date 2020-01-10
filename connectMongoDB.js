@@ -11,10 +11,9 @@ app.use(bodyparse.json())
 const qnconfig = require('./config.js')
 // 处理请求
 app.get('/token', (req, res, next) => {
-  res.status(200).send(qnconfig.uploadToken)
+    console.log("接收到上传图片请求");
+    res.status(200).send(qnconfig.uploadToken)
 })
-
-
 
 
 //解决跨域
@@ -251,7 +250,7 @@ app.get('/deleteFoodItem', async function (req, res) {
 app.get('/insertFoodItem', async function (req, res) {
     //将传入的foodItem插入到数据库文档集合中
     let foodItem = JSON.parse(req.query.foodItem);
-    console.log("转换后的新增foodItem", foodItem);
+    // console.log("转换后的新增foodItem", foodItem);
     home_foodlists_Schema.create({
         foodID: foodItem.foodID,
         foodInfo: foodItem.foodInfo,
@@ -273,6 +272,45 @@ app.get('/insertFoodItem', async function (req, res) {
             return doc;
         }
     });
+})
+
+//修改分类
+app.get('/modifyFoodType', async function (req, res) {
+    console.log("要修改的类型", JSON.parse(req.query.newTypeArr));
+    let newTypeArr = JSON.parse(req.query.newTypeArr);
+    //找到要修改的菜品 进行数据更新
+    for (let i in newTypeArr) {
+        console.log("修改：", i, newTypeArr[i].oldType);
+        home_foodlists_Schema.updateMany({
+            "foodType": newTypeArr[i].oldType
+        }, {
+            "$set": {
+                "foodType": newTypeArr[i].newType,
+            }
+        }, function (err, doc) {
+            if (err) {
+                console.log("类型更新失败");
+            } else {
+                console.log("类型更新成功");
+            }
+        })
+    }
+
+})
+
+//删除分类
+app.get('/removeFoodType', async function (req, res) {
+    console.log("删除分类：", req.query.foodType);
+    //找到菜品类型 进行删除
+    home_foodlists_Schema.remove({
+        "foodType": req.query.foodType
+    }, function (err, doc) {
+        if (err) {
+            console.log("类型删除失败");
+        } else {
+            console.log("类型删除成功");
+        }
+    })
 })
 
 
