@@ -7,7 +7,7 @@ const secretKey = 'Fzu7CjuXzv6Qu4s8rnw17qYPsNjTx9UUURSMkgTX'
 const mac = new qiniu.auth.digest.Mac(accessKey, secretKey)
 const options = {
     scope: 'cwh-imglist',
-    expires: 7200
+    expires: 720000
     //自定义凭证有效期,单位为秒，为上传凭证的有效时间）
 }
 const putPolicy = new qiniu.rs.PutPolicy(options)

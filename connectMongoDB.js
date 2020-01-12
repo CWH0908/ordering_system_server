@@ -313,6 +313,32 @@ app.get('/removeFoodType', async function (req, res) {
     })
 })
 
+//店铺管理板块更新店铺信息
+app.get('/updateShopData', async function (req, res) {
+    console.log("更新店铺信息：", req.query.shopData);
+    //找到店铺ID 进行数据更新
+    home_shoplists_Schema.updateOne({
+        "shopID": req.query.shopID
+    }, {
+        "$set": {
+            "pic_url": JSON.parse(req.query.shopData).pic_url,
+            "shopName": JSON.parse(req.query.shopData).shopName,
+            "startFee": JSON.parse(req.query.shopData).startFee,
+            "sendFee": JSON.parse(req.query.shopData).sendFee,
+            "phone": JSON.parse(req.query.shopData).phone,
+            "isClose": JSON.parse(req.query.shopData).isClose,
+            "openTime": JSON.parse(req.query.shopData).openTime,
+            "closeTime": JSON.parse(req.query.shopData).closeTime,
+            "mallType": JSON.parse(req.query.shopData).mallType,
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("店铺信息更新失败");
+        } else {
+            console.log("店铺信息更新成功");
+        }
+    })
+})
 
 
 
