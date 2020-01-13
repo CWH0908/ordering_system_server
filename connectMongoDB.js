@@ -4,19 +4,23 @@ let app = new express();
 // let axios = require('axios');
 
 let hasNewOrder = false;
+let whichShop = "" //有新订单的店铺
 
 //webSocket 通信
 const expressWs = require("express-ws")
 expressWs(app);
-app.ws("/test", (ws, req) => {
-    console.log("页面发起webSocket连接请求");
-    ws.send("服务器返回数据：连接成功", hasNewOrder)
+app.ws("/test/:shopID", (ws, req) => {
+    let currentShopID = "00000"
+    // req.params.shopID
+    console.log("页面发起webSocket连接请求,店铺ID：", currentShopID);
+
+    ws.send("服务器：连接成功")
     let interval
     // 连接成功后使用定时器定时向客户端发送数据，同时要注意定时器执行的时机，要在连接开启状态下才可以发送数据
     interval = setInterval(() => {
         if (ws.readyState === ws.OPEN) {
-            if (hasNewOrder == true) {
-                ws.send("有新的订单咯~~~")
+            if (hasNewOrder == true && whichShop == currentShopID) {
+                ws.send("有新订单")
                 hasNewOrder = false;
             }
         } else {
@@ -24,11 +28,12 @@ app.ws("/test", (ws, req) => {
         }
     }, 1000)
 
-
     // 监听客户端发来的数据，直接将信息原封不动返回回去
-    ws.on("message", msg => {
-        ws.send(msg)
-    })
+    // ws.on("message", msg => {
+    //     //接收到的msg是序列化后的形式
+    //     // console.log("接收到数据msg",JSON.parse(msg));
+    //     ws.send(`服务器：接到页面数据${msg}`)
+    // })
 })
 
 
@@ -65,6 +70,7 @@ let home_shoplists_Schema = require("./home/home_shoplists_Schema")
 let home_foodlists_Schema = require("./home/home_foodlists_Schema")
 let login_Schema = require("./userData/login_Schema")
 let shopLogin_Schema = require("./adminSchema/shopLogin_Schema")
+let order_Schema = require("./orderData/order_Schema")
 
 //客户端请求*********************************************************************************************************
 
@@ -198,7 +204,9 @@ app.post('/updateAddress', async function (req, res) {
 
 //用户订单更新入数据库
 app.post('/updateOrder', async function (req, res) {
-    hasNewOrder = true; //有新的订单
+    // hasNewOrder = true; //有新的订单
+    // whichShop = req.body.params.orderData; //哪家店铺有新订单
+    // console.log("这家店有新订单",whichShop);
     //找到账号为*** 修改订单数组为新的
     login_Schema.updateOne({
         "userAccount": req.body.params.account
@@ -213,6 +221,43 @@ app.post('/updateOrder', async function (req, res) {
             console.log("订单更新成功");
         }
     })
+})
+
+//获取新的订单文档***********************************************************
+app.post('/getOrder', async function (req, res) {
+    let data = await order_Schema.find({
+        userAccount: req.body.params.account
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            console.log("用户请求自己订单");
+            return doc;
+        }
+    });
+    res.json(data); //返回数据
+})
+//保存订单信息
+app.post('/saveOrder', async function (req, res) {
+    hasNewOrder = true; //有新的订单
+    whichShop = req.body.params.orderData.shopInfo.shopID; //哪家店铺有新订单
+    order_Schema.create({
+        shopInfo: req.body.params.orderData.shopInfo,
+        userAccount: req.body.params.orderData.userAccount,
+        foodList: req.body.params.orderData.foodList,
+        addressData: req.body.params.orderData.addressData,
+        payType: req.body.params.orderData.payType,
+        buyTime: req.body.params.orderData.buyTime
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            console.log("创建新订单");
+            return doc;
+        }
+    });
 })
 
 // ********************************************************************************************************
