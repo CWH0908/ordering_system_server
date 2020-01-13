@@ -7,17 +7,32 @@ var TestSchema = new mongoose.Schema({
     shopName: {
         type: String
     },
-    rateValue:{
-        type:Number
+    rateValue: {
+        type: Number
     },
-    saleTimes:{
-        type:Number
+    saleTimes: {
+        type: Number
     },
-    startFee:{
-        type:Number
+    startFee: {
+        type: Number
     },
-    sendFee:{
-        type:Number
+    sendFee: {
+        type: Number
+    },
+    phone: {
+        type: String
+    },
+    openTime: {
+        type: String
+    },
+    closeTime: {
+        type: String
+    },
+    isClose: {
+        type: Boolean
+    },
+    mallType: {
+        type: String
     }
 });
 var TestModel = mongoose.connection.model("home_shoplists", TestSchema); //填写你的数据库 集合（复数形式）

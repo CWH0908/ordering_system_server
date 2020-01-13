@@ -1,7 +1,37 @@
 let express = require('express');
 let app = new express();
-let RouterAPI = express.Router();
-let axios = require('axios');
+// let RouterAPI = express.Router();
+// let axios = require('axios');
+
+let hasNewOrder = false;
+
+//webSocket 通信
+const expressWs = require("express-ws")
+expressWs(app);
+app.ws("/test", (ws, req) => {
+    console.log("页面发起webSocket连接请求");
+    ws.send("服务器返回数据：连接成功", hasNewOrder)
+    let interval
+    // 连接成功后使用定时器定时向客户端发送数据，同时要注意定时器执行的时机，要在连接开启状态下才可以发送数据
+    interval = setInterval(() => {
+        if (ws.readyState === ws.OPEN) {
+            if (hasNewOrder == true) {
+                ws.send("有新的订单咯~~~")
+                hasNewOrder = false;
+            }
+        } else {
+            clearInterval(interval)
+        }
+    }, 1000)
+
+
+    // 监听客户端发来的数据，直接将信息原封不动返回回去
+    ws.on("message", msg => {
+        ws.send(msg)
+    })
+})
+
+
 
 //引入七牛云请求配置
 const bodyparse = require('body-parser')
@@ -22,7 +52,7 @@ app.all('*', function (req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With');
     res.header('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
     if (req.method == 'OPTIONS') {
-        res.send(200);
+        res.sendStatus(200);
     } else {
         next();
     }
@@ -97,11 +127,11 @@ app.get('/home_foodList', async function (req, res) {
 })
 
 //用户登录
-app.get('/login', async function (req, res) {
+app.post('/login', async function (req, res) {
     // console.log("参数信息",req.query.account,req.query.psw);
     let data = await login_Schema.find({
-        userAccount: req.query.account,
-        password: req.query.psw
+        userAccount: req.body.params.account,
+        password: req.body.params.psw
     }, function (err, doc) {
         if (err) {
             console.log("访问数据库错误 :" + err);
@@ -114,9 +144,9 @@ app.get('/login', async function (req, res) {
 })
 
 //用户注册搜索账号
-app.get('/register', async function (req, res) {
+app.post('/register', async function (req, res) {
     let data = await login_Schema.find({
-        userAccount: req.query.account
+        userAccount: req.body.params.account
     }, function (err, doc) {
         if (err) {
             console.log("访问数据库错误 :" + err);
@@ -129,10 +159,11 @@ app.get('/register', async function (req, res) {
 })
 
 //用户注册数据新增入数据库
-app.get('/inputRegister', async function (req, res) {
+app.post('/inputRegister', async function (req, res) {
+    console.log("新增注册用户");
     login_Schema.create({
-        userAccount: req.query.account,
-        password: req.query.psw,
+        userAccount: req.body.params.account,
+        password: req.body.params.psw,
         pic_url: "'http://49.235.92.173:70/graduationDesign_images/defaultHeadImg.jpg'", //默认头像地址
         orderData: [],
         addressData: []
@@ -147,15 +178,14 @@ app.get('/inputRegister', async function (req, res) {
 })
 
 //用户地址更新入数据库
-app.get('/updateAddress', async function (req, res) {
-
+app.post('/updateAddress', async function (req, res) {
     //找到账号为*** 修改地址数组为新的
     // db.user_datas.updateOne({userAccount:'15815817682'},{$push:{"addressData":{name:'cwh'}}})
     login_Schema.updateOne({
-        "userAccount": req.query.account
+        "userAccount": req.body.params.account
     }, {
         "$set": {
-            "addressData": JSON.parse(req.query.addressData)
+            "addressData": JSON.parse(req.body.params.addressData)
         }
     }, function (err, doc) {
         if (err) {
@@ -167,13 +197,14 @@ app.get('/updateAddress', async function (req, res) {
 })
 
 //用户订单更新入数据库
-app.get('/updateOrder', async function (req, res) {
+app.post('/updateOrder', async function (req, res) {
+    hasNewOrder = true; //有新的订单
     //找到账号为*** 修改订单数组为新的
     login_Schema.updateOne({
-        "userAccount": req.query.account
+        "userAccount": req.body.params.account
     }, {
         "$set": {
-            "orderData": JSON.parse(req.query.orderData)
+            "orderData": JSON.parse(req.body.params.orderData)
         }
     }, function (err, doc) {
         if (err) {
@@ -315,7 +346,7 @@ app.get('/removeFoodType', async function (req, res) {
 
 //店铺管理板块更新店铺信息
 app.get('/updateShopData', async function (req, res) {
-    console.log("更新店铺信息：", req.query.shopData);
+    console.log("更新店铺信息：", JSON.parse(req.query.shopData).phone, req.query.shopData);
     //找到店铺ID 进行数据更新
     home_shoplists_Schema.updateOne({
         "shopID": req.query.shopID

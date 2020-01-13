@@ -2,6 +2,7 @@
   "dependencies": {
     "axios": "D:\\webs\\��ѧweb\\webʵս��Ŀ\\Node_test>\"D:\\\\node.exe\"  \"D:\\\\node_modules\\npm\\bin\\npm-cli.js\" config get save-prefix \r\n^0.19.0",
     "express": "D:\\webs\\��ѧweb\\webʵս��Ŀ\\Node_test>\"D:\\\\node.exe\"  \"D:\\\\node_modules\\npm\\bin\\npm-cli.js\" config get save-prefix \r\n^4.17.1",
+    "express-ws": "D:\\webs\\��ѧweb\\webʵս��Ŀ\\��ҵ���node����\\node>\"D:\\\\node.exe\"  \"D:\\\\node_modules\\npm\\bin\\npm-cli.js\" config get save-prefix \r\n^4.0.0",
     "mongoose": "D:\\webs\\��ѧweb\\webʵս��Ŀ\\��ҵ���node����\\node>\"D:\\\\node.exe\"  \"D:\\\\node_modules\\npm\\bin\\npm-cli.js\" config get save-prefix \r\n^5.8.1",
     "qiniu": "D:\\webs\\��ѧweb\\webʵս��Ŀ\\��ҵ���node����\\node>\"D:\\\\node.exe\"  \"D:\\\\node_modules\\npm\\bin\\npm-cli.js\" config get save-prefix \r\n^7.3.0"
   }
