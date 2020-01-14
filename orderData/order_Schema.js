@@ -1,6 +1,9 @@
 let mongoose = require('mongoose')
 
 var TestSchema = new mongoose.Schema({
+    shopID: {
+        type: String
+    },
     userAccount: {
         type: String
     },

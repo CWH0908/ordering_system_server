@@ -10,7 +10,7 @@ let whichShop = "" //有新订单的店铺
 const expressWs = require("express-ws")
 expressWs(app);
 app.ws("/test/:shopID", (ws, req) => {
-    let currentShopID = "00000"
+    let currentShopID = req.params.shopID
     // req.params.shopID
     console.log("页面发起webSocket连接请求,店铺ID：", currentShopID);
 
@@ -22,6 +22,7 @@ app.ws("/test/:shopID", (ws, req) => {
             if (hasNewOrder == true && whichShop == currentShopID) {
                 ws.send("有新订单")
                 hasNewOrder = false;
+                whichShop = ""
             }
         } else {
             clearInterval(interval)
@@ -84,7 +85,7 @@ app.get('/home_nav', async function (req, res) {
             return doc;
         }
     });
-    res.json(data);; //返回数据
+    res.json(data); //返回数据
 })
 
 //获取home页所有店铺列表
@@ -97,7 +98,7 @@ app.get('/home_recommend', async function (req, res) {
             return doc;
         }
     });
-    res.json(data);; //返回数据
+    res.json(data); //返回数据
 })
 
 //获取home页店铺信息
@@ -181,6 +182,7 @@ app.post('/inputRegister', async function (req, res) {
             return doc;
         }
     });
+    res.send(200)
 })
 
 //用户地址更新入数据库
@@ -200,6 +202,7 @@ app.post('/updateAddress', async function (req, res) {
             console.log("地址更新成功");
         }
     })
+    res.send(200)
 })
 
 //用户订单更新入数据库
@@ -221,9 +224,10 @@ app.post('/updateOrder', async function (req, res) {
             console.log("订单更新成功");
         }
     })
+    res.send(200)
 })
 
-//获取新的订单文档***********************************************************
+//用户获取新的订单文档***********************************************************
 app.post('/getOrder', async function (req, res) {
     let data = await order_Schema.find({
         userAccount: req.body.params.account
@@ -238,11 +242,12 @@ app.post('/getOrder', async function (req, res) {
     });
     res.json(data); //返回数据
 })
-//保存订单信息
+//用户保存订单信息
 app.post('/saveOrder', async function (req, res) {
     hasNewOrder = true; //有新的订单
     whichShop = req.body.params.orderData.shopInfo.shopID; //哪家店铺有新订单
     order_Schema.create({
+        shopID: req.body.params.orderData.shopID,
         shopInfo: req.body.params.orderData.shopInfo,
         userAccount: req.body.params.orderData.userAccount,
         foodList: req.body.params.orderData.foodList,
@@ -258,6 +263,7 @@ app.post('/saveOrder', async function (req, res) {
             return doc;
         }
     });
+    res.send(200)
 })
 
 // ********************************************************************************************************
@@ -305,6 +311,7 @@ app.get('/updateFoodList', async function (req, res) {
             console.log("菜品更新成功");
         }
     })
+    res.send(200)
 })
 
 //删除菜品
@@ -320,6 +327,7 @@ app.get('/deleteFoodItem', async function (req, res) {
             console.log("菜品删除成功");
         }
     })
+    res.send(200)
 })
 
 //新增菜品
@@ -348,6 +356,7 @@ app.get('/insertFoodItem', async function (req, res) {
             return doc;
         }
     });
+    res.send(200)
 })
 
 //修改分类
@@ -371,7 +380,7 @@ app.get('/modifyFoodType', async function (req, res) {
             }
         })
     }
-
+    res.send(200)
 })
 
 //删除分类
@@ -387,6 +396,7 @@ app.get('/removeFoodType', async function (req, res) {
             console.log("类型删除成功");
         }
     })
+    res.send(200)
 })
 
 //店铺管理板块更新店铺信息
@@ -414,6 +424,23 @@ app.get('/updateShopData', async function (req, res) {
             console.log("店铺信息更新成功");
         }
     })
+    res.send(200)
+})
+
+//店铺获取订单信息
+app.post('/getShopOrder', async function (req, res) {
+    let data = await order_Schema.find({
+        shopID: req.body.params.ShopID
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            console.log("店铺请求自己订单");
+            return doc;
+        }
+    });
+    res.json(data); //返回数据
 })
 
 
