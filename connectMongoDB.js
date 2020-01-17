@@ -6,9 +6,11 @@ let app = new express();
 let hasNewOrder = false;
 let whichShop = "" //有新订单的店铺
 
-//webSocket 通信
+let modifyDataShopID = ""; //修改信息的店铺ID
+
 const expressWs = require("express-ws")
 expressWs(app);
+//webSocket 商家 通信
 app.ws("/test/:shopID", (ws, req) => {
     let currentShopID = req.params.shopID
     // req.params.shopID
@@ -37,17 +39,37 @@ app.ws("/test/:shopID", (ws, req) => {
     // })
 })
 
+//webSocket 用户 通信
+app.ws("/userWebScoket/:shopID", (ws, req) => {
+    let currentShopID = req.params.shopID
+    console.log("用户webSocket请求连接店铺ID：", currentShopID);
+    ws.send("服务器：连接成功")
+    let interval
+    // 连接成功后使用定时器定时向客户端发送数据，同时要注意定时器执行的时机，要在连接开启状态下才可以发送数据
+    interval = setInterval(() => {
+        if (ws.readyState === ws.OPEN) {
+            if (modifyDataShopID == currentShopID) {
+                ws.send("当前店铺更新信息")
+                modifyDataShopID = ""; //发送更新提示后置空
+            }
+        } else {
+            clearInterval(interval)
+        }
+    }, 1000)
+})
 
 
 //引入七牛云请求配置
 const bodyparse = require('body-parser')
 // 解析数据
 app.use(bodyparse.json())
-// 引入七牛云配置
-const qnconfig = require('./config.js')
 // 处理请求
 app.get('/token', (req, res, next) => {
-    console.log("接收到上传图片请求");
+    console.log("接收到上传图片请求token");
+    //每次请求重置token的过期时间
+    delete require.cache[require.resolve('./config.js')];
+    // 引入七牛云配置文件
+    const qnconfig = require('./config.js')
     res.status(200).send(qnconfig.uploadToken)
 })
 
@@ -403,6 +425,7 @@ app.get('/removeFoodType', async function (req, res) {
 app.get('/updateShopData', async function (req, res) {
     console.log("更新店铺信息：", JSON.parse(req.query.shopData).phone, req.query.shopData);
     //找到店铺ID 进行数据更新
+    modifyDataShopID = JSON.parse(req.query.shopData).shopID;
     home_shoplists_Schema.updateOne({
         "shopID": req.query.shopID
     }, {
