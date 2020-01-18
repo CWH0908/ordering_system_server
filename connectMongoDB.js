@@ -8,6 +8,9 @@ let whichShop = "" //有新订单的店铺
 
 let modifyDataShopID = ""; //修改信息的店铺ID
 
+let askCancelShopID = ""; //需要处理取消订单处理的店铺
+let askResaultUserAccount = ""; //有新的处理结果的用户
+
 const expressWs = require("express-ws")
 expressWs(app);
 //webSocket 商家 通信
@@ -25,6 +28,11 @@ app.ws("/test/:shopID", (ws, req) => {
                 ws.send("有新订单")
                 hasNewOrder = false;
                 whichShop = ""
+            }
+            if (askCancelShopID == currentShopID) {
+                console.log("本店收到取消订单申请：", currentShopID);
+                ws.send("收到取消订单申请")
+                askCancelShopID = "";
             }
         } else {
             clearInterval(interval)
@@ -51,6 +59,25 @@ app.ws("/userWebScoket/:shopID", (ws, req) => {
             if (modifyDataShopID == currentShopID) {
                 ws.send("当前店铺更新信息")
                 modifyDataShopID = ""; //发送更新提示后置空
+            }
+        } else {
+            clearInterval(interval)
+        }
+    }, 1000)
+})
+
+//webSocket 用户监听订单处理情况
+app.ws("/clientWebScoket/:userAccount", (ws, req) => {
+    let userAccount = req.params.userAccount
+    console.log("用户webSocket请求连接：", userAccount);
+    ws.send("服务器：连接成功")
+    let interval
+    // 连接成功后使用定时器定时向客户端发送数据，同时要注意定时器执行的时机，要在连接开启状态下才可以发送数据
+    interval = setInterval(() => {
+        if (ws.readyState === ws.OPEN) {
+            if (userAccount == askResaultUserAccount) {
+                ws.send("取消订单有新的处理结果")
+                askResaultUserAccount = "";
             }
         } else {
             clearInterval(interval)
@@ -227,27 +254,27 @@ app.post('/updateAddress', async function (req, res) {
     res.send(200)
 })
 
-//用户订单更新入数据库
-app.post('/updateOrder', async function (req, res) {
-    // hasNewOrder = true; //有新的订单
-    // whichShop = req.body.params.orderData; //哪家店铺有新订单
-    // console.log("这家店有新订单",whichShop);
-    //找到账号为*** 修改订单数组为新的
-    login_Schema.updateOne({
-        "userAccount": req.body.params.account
-    }, {
-        "$set": {
-            "orderData": JSON.parse(req.body.params.orderData)
-        }
-    }, function (err, doc) {
-        if (err) {
-            console.log("订单更新失败");
-        } else {
-            console.log("订单更新成功");
-        }
-    })
-    res.send(200)
-})
+//用户订单更新入数据库，已废弃！！！！
+// app.post('/updateOrder', async function (req, res) {
+//     // hasNewOrder = true; //有新的订单
+//     // whichShop = req.body.params.orderData; //哪家店铺有新订单
+//     // console.log("这家店有新订单",whichShop);
+//     //找到账号为*** 修改订单数组为新的
+//     login_Schema.updateOne({
+//         "userAccount": req.body.params.account
+//     }, {
+//         "$set": {
+//             "orderData": JSON.parse(req.body.params.orderData)
+//         }
+//     }, function (err, doc) {
+//         if (err) {
+//             console.log("订单更新失败");
+//         } else {
+//             console.log("订单更新成功");
+//         }
+//     })
+//     res.send(200)
+// })
 
 //用户获取新的订单文档***********************************************************
 app.post('/getOrder', async function (req, res) {
@@ -275,7 +302,9 @@ app.post('/saveOrder', async function (req, res) {
         foodList: req.body.params.orderData.foodList,
         addressData: req.body.params.orderData.addressData,
         payType: req.body.params.orderData.payType,
-        buyTime: req.body.params.orderData.buyTime
+        buyTime: req.body.params.orderData.buyTime,
+        state: req.body.params.orderData.state,
+        orderID: req.body.params.orderData.orderID
     }, function (err, doc) {
         if (err) {
             console.log("访问数据库错误 :" + err);
@@ -287,6 +316,68 @@ app.post('/saveOrder', async function (req, res) {
     });
     res.send(200)
 })
+
+//更新订单操作，用户
+app.post('/updateOrderState', async function (req, res) {
+    askCancelShopID = req.body.params.orderItem.shopID;
+    console.log("打印需要更新的订单信息：", req.body.params.orderItem.orderID, req.body.params.state)
+    order_Schema.updateOne({
+        "orderID": req.body.params.orderItem.orderID
+    }, {
+        "$set": {
+            "state": req.body.params.state
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("用户取消订单状态更新失败");
+        } else {
+            console.log("用户取消订单状态更新成功");
+        }
+    })
+    res.send(200)
+})
+
+//商家处理取消订单请求
+app.post('/shopUpdateOrderState', async function (req, res) {
+    askResaultUserAccount = req.body.params.orderItem.userAccount;
+    console.log("打印需要更新的订单信息：", req.body.params.orderItem.orderID, req.body.params.state)
+    order_Schema.updateOne({
+        "orderID": req.body.params.orderItem.orderID
+    }, {
+        "$set": {
+            "state": req.body.params.state
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("取消订单状态更新失败");
+        } else {
+            console.log("取消订单状态更新成功");
+        }
+    })
+    res.send(200)
+})
+
+
+
+
+//用户下单，店铺销售量+1
+app.post('/addShopSaleTimes', async function (req, res) {
+    home_shoplists_Schema.updateOne({
+        "shopID": req.body.params.shopID
+    }, {
+        "$set": {
+            "saleTimes": JSON.parse(req.body.params.shopInfo.saleTimes)
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("销量更新失败");
+        } else {
+            console.log("销量更新成功");
+        }
+    })
+    res.send(200)
+})
+
 
 // ********************************************************************************************************
 
