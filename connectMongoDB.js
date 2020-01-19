@@ -97,7 +97,7 @@ app.get('/token', (req, res, next) => {
     delete require.cache[require.resolve('./config.js')];
     // 引入七牛云配置文件
     const qnconfig = require('./config.js')
-    res.status(200).sendStatus(qnconfig.uploadToken)
+    res.status(200).send(qnconfig.uploadToken)
 })
 
 
@@ -533,7 +533,7 @@ app.get('/removeFoodType', async function (req, res) {
 
 //店铺管理板块更新店铺信息
 app.get('/updateShopData', async function (req, res) {
-    console.log("更新店铺信息：", JSON.parse(req.query.shopData).phone, req.query.shopData);
+    // console.log("更新店铺信息：", JSON.parse(req.query.shopData).phone, req.query.shopData);
     //找到店铺ID 进行数据更新
     modifyDataShopID = JSON.parse(req.query.shopData).shopID;
     home_shoplists_Schema.updateOne({
@@ -555,6 +555,27 @@ app.get('/updateShopData', async function (req, res) {
             console.log("店铺信息更新失败");
         } else {
             console.log("店铺信息更新成功");
+        }
+    })
+    res.sendStatus(200)
+})
+
+
+//用户更新店铺评分
+app.get('/updateShopRateValue', async function (req, res) {
+    // console.log("用户更新店铺评分：");
+    //找到店铺ID 进行数据更新
+    home_shoplists_Schema.updateOne({
+        "shopID": req.query.shopID
+    }, {
+        "$set": {
+            "rateValue": req.query.rateValue,
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("店铺评分更新失败");
+        } else {
+            // console.log("店铺评分更新成功");
         }
     })
     res.sendStatus(200)
