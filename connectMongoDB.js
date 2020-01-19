@@ -97,7 +97,7 @@ app.get('/token', (req, res, next) => {
     delete require.cache[require.resolve('./config.js')];
     // 引入七牛云配置文件
     const qnconfig = require('./config.js')
-    res.status(200).send(qnconfig.uploadToken)
+    res.status(200).sendStatus(qnconfig.uploadToken)
 })
 
 
@@ -231,7 +231,7 @@ app.post('/inputRegister', async function (req, res) {
             return doc;
         }
     });
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //用户地址更新入数据库
@@ -251,7 +251,7 @@ app.post('/updateAddress', async function (req, res) {
             console.log("地址更新成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //用户订单更新入数据库，已废弃！！！！
@@ -273,7 +273,7 @@ app.post('/updateAddress', async function (req, res) {
 //             console.log("订单更新成功");
 //         }
 //     })
-//     res.send(200)
+//     res.sendStatus(200)
 // })
 
 //用户获取新的订单文档***********************************************************
@@ -304,6 +304,8 @@ app.post('/saveOrder', async function (req, res) {
         payType: req.body.params.orderData.payType,
         buyTime: req.body.params.orderData.buyTime,
         state: req.body.params.orderData.state,
+        rateValue: req.body.params.orderData.rateValue,
+        comment: req.body.params.orderData.comment,
         orderID: req.body.params.orderData.orderID
     }, function (err, doc) {
         if (err) {
@@ -314,10 +316,10 @@ app.post('/saveOrder', async function (req, res) {
             return doc;
         }
     });
-    res.send(200)
+    res.sendStatus(200)
 })
 
-//更新订单操作，用户
+//更新订单状态操作，用户
 app.post('/updateOrderState', async function (req, res) {
     askCancelShopID = req.body.params.orderItem.shopID;
     console.log("打印需要更新的订单信息：", req.body.params.orderItem.orderID, req.body.params.state)
@@ -334,7 +336,27 @@ app.post('/updateOrderState', async function (req, res) {
             console.log("用户取消订单状态更新成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
+})
+
+//用户更新订单评论操作
+app.post('/updateOrderComment', async function (req, res) {
+    console.log("打印需要更新的订单信息：", req.body.params.orderItem.orderID, req.body.params.rateValue, req.body.params.comment)
+    order_Schema.updateOne({
+        "orderID": req.body.params.orderItem.orderID
+    }, {
+        "$set": {
+            "rateValue": req.body.params.rateValue,
+            "comment": req.body.params.comment
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("评论失败");
+        } else {
+            console.log("评论成功");
+        }
+    })
+    res.sendStatus(200)
 })
 
 //商家处理取消订单请求
@@ -354,14 +376,11 @@ app.post('/shopUpdateOrderState', async function (req, res) {
             console.log("取消订单状态更新成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
 })
 
-
-
-
 //用户下单，店铺销售量+1
-app.post('/addShopSaleTimes', async function (req, res) {
+app.post('/updateShopSaleTimes', async function (req, res) {
     home_shoplists_Schema.updateOne({
         "shopID": req.body.params.shopID
     }, {
@@ -375,7 +394,7 @@ app.post('/addShopSaleTimes', async function (req, res) {
             console.log("销量更新成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
 })
 
 
@@ -424,7 +443,7 @@ app.get('/updateFoodList', async function (req, res) {
             console.log("菜品更新成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //删除菜品
@@ -440,7 +459,7 @@ app.get('/deleteFoodItem', async function (req, res) {
             console.log("菜品删除成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //新增菜品
@@ -469,7 +488,7 @@ app.get('/insertFoodItem', async function (req, res) {
             return doc;
         }
     });
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //修改分类
@@ -493,7 +512,7 @@ app.get('/modifyFoodType', async function (req, res) {
             }
         })
     }
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //删除分类
@@ -509,7 +528,7 @@ app.get('/removeFoodType', async function (req, res) {
             console.log("类型删除成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //店铺管理板块更新店铺信息
@@ -538,7 +557,7 @@ app.get('/updateShopData', async function (req, res) {
             console.log("店铺信息更新成功");
         }
     })
-    res.send(200)
+    res.sendStatus(200)
 })
 
 //店铺获取订单信息
@@ -557,6 +576,19 @@ app.post('/getShopOrder', async function (req, res) {
     res.json(data); //返回数据
 })
 
+//获取所有订单信息
+app.post('/getAllShopOrder', async function (req, res) {
+    let data = await order_Schema.find({}, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            console.log("请求所有店铺订单信息");
+            return doc;
+        }
+    });
+    res.json(data); //返回数据
+})
 
 
 //连接数据库
