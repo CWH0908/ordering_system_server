@@ -32,7 +32,7 @@ var TestSchema = new mongoose.Schema({
         type: String
     },
     saleTimes: {
-        type: String
+        type: Number
     }
 
 });

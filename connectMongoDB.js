@@ -11,6 +11,8 @@ let modifyDataShopID = ""; //修改信息的店铺ID
 let askCancelShopID = ""; //需要处理取消订单处理的店铺
 let askResaultUserAccount = ""; //有新的处理结果的用户
 
+let updateSaleTimesShopID = "";//有销量更新的店铺
+
 const expressWs = require("express-ws")
 expressWs(app);
 //webSocket 商家 通信
@@ -33,6 +35,11 @@ app.ws("/test/:shopID", (ws, req) => {
                 console.log("本店收到取消订单申请：", currentShopID);
                 ws.send("收到取消订单申请")
                 askCancelShopID = "";
+            }
+            if (updateSaleTimesShopID == currentShopID) {
+                console.log("本店销量有更新：", currentShopID);
+                ws.send("销量更新")
+                updateSaleTimesShopID = "";
             }
         } else {
             clearInterval(interval)
@@ -397,6 +404,37 @@ app.post('/updateShopSaleTimes', async function (req, res) {
     res.sendStatus(200)
 })
 
+//用户订单到达，菜品的销售量增加
+app.post('/updateFoodSaleTimes', async function (req, res) {
+    let oldData = await home_foodlists_Schema.find({
+        foodID: req.body.params.foodID
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            return doc;
+        }
+    });
+    //通知该店铺销量数据有更新
+    updateSaleTimesShopID = oldData[0].shopID;
+
+    // console.log("菜品ID：", req.body.params.foodID, "旧的菜品销量:",oldData, oldData[0].saleTimes);
+    home_foodlists_Schema.updateOne({
+        "foodID": req.body.params.foodID
+    }, {
+        "$set": {
+            "saleTimes": oldData[0].saleTimes + JSON.parse(req.body.params.foodCount)
+        }
+    }, function (err, doc) {
+        if (err) {
+            console.log("菜品销量更新失败");
+        } else {
+            console.log("菜品销量更新成功");
+        }
+    })
+    res.sendStatus(200)
+})
 
 // ********************************************************************************************************
 
@@ -419,7 +457,62 @@ app.get('/shopLogin', async function (req, res) {
     res.json(data); //返回数据
 })
 
-//商家注册预留
+//商家注册搜索账号
+app.post('/shopRegister', async function (req, res) {
+    let data = await shopLogin_Schema.find({
+        shopAccount: req.body.params.account
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            return doc;
+        }
+    });
+    res.json(data); //返回数据
+})
+
+//商家注册数据新增入数据库
+app.post('/shopInputRegister', async function (req, res) {
+    console.log("新增注册店铺");
+    let timeNumber = new Date().getTime(); //时间戳作为店铺ID
+    shopLogin_Schema.create({
+        shopAccount: req.body.params.account,
+        password: req.body.params.psw,
+        shopID: timeNumber
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            console.log("店铺登录文档写入数据成功");
+            return doc;
+        }
+    });
+    home_shoplists_Schema.create({
+        shopID: timeNumber,
+        pic_url: "defaultMall.jpeg",
+        shopName: "新店铺_" + timeNumber,
+        rateValue: 0,
+        saleTimes: 0,
+        startFee: 0,
+        sendFee: 0,
+        phone: "",
+        openTime: "08:00",
+        closeTime: "20:00",
+        isClose: false,
+        mallType: "Popular"
+    }, function (err, doc) {
+        if (err) {
+            console.log("访问数据库错误 :" + err);
+            return "error"
+        } else {
+            console.log("店铺信息写入成功~");
+            return doc;
+        }
+    });
+    res.sendStatus(200)
+})
 
 //修改商家菜品列表
 app.get('/updateFoodList', async function (req, res) {
